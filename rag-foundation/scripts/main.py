@@ -4,6 +4,7 @@ from pathlib import Path
 import fire
 from llama_index.core import Document
 from llama_index.core.node_parser import SentenceSplitter
+
 from vector_store.node import TextNode, VectorStoreQueryResult
 from vector_store.semantic_vector_store import SemanticVectorStore
 from vector_store.sparse_vector_store import SparseVectorStore
