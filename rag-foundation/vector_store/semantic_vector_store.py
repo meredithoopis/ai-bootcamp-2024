@@ -2,7 +2,7 @@
 # flake8: noqa: F841
 import sys
 from typing import Dict, List, cast
-
+import heapq
 import numpy as np
 from loguru import logger
 from sentence_transformers import SentenceTransformer
@@ -76,17 +76,15 @@ class SemanticVectorStore(BaseVectorStore):
         # the query embedding with the document embeddings
         # HINT: np.dot
         "Your code here"
-        dproduct_arr = None
-        # calculate the cosine similarity
-        # by dividing the dot product by the norm
-        # HINT: np.linalg.norm
-        "Your code here"
-        cos_sim_arr = None
+        dproduct_arr = np.dot(dembed_np, qembed_np)
 
-        # get the indices of the top k similarities
-        "Your code here"
-        similarities = None
-        node_ids = None
+        # Calculate the cosine similarity by dividing the dot product by the norms
+        cos_sim_arr = dproduct_arr / (np.linalg.norm(dembed_np, axis=1) * np.linalg.norm(qembed_np))
+
+        # Get the indices of the top k similarities
+        top_k_indices = heapq.nlargest(similarity_top_k, enumerate(cos_sim_arr), key=lambda x: x[1])
+        similarities = [pair[1] for pair in top_k_indices]
+        node_ids = [doc_ids[pair[0]] for pair in top_k_indices]
 
         return similarities, node_ids
 

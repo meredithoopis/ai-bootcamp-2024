@@ -13,6 +13,8 @@ from transformers import AutoTokenizer
 from .base import BaseVectorStore
 from .node import TextNode, VectorStoreQueryResult
 
+
+
 logger.add(
     sink=sys.stdout,
     colorize=True,
@@ -27,8 +29,8 @@ TOKENIZER = AutoTokenizer.from_pretrained(
 class SparseVectorStore(BaseVectorStore):
     """VectorStore2 (add/get/delete implemented)."""
 
-    saved_file: str = "rag-foundation/data/test_db_10.csv"
-    metadata_file: Path = Path("rag-foundation/data/sparse_metadata_tmp.json")
+    saved_file: str = "rag-foundation/data/test_db.csv"
+    metadata_file: Path = Path("rag-foundation/data/sparse_metadata.json")
     tokenizer: ClassVar[AutoTokenizer] = TOKENIZER
     corpus_size: int = Field(default=0, init=False)
     avgdl: float = Field(default=0.0, init=False)
@@ -117,7 +119,7 @@ class SparseVectorStore(BaseVectorStore):
         # Calculate the inverse document frequency for a word
         # HINT: Use the formula provided in the BM25 algorithm and np.log()
         "Your code here"
-        idf_score = None
+        idf_score = np.log(1 + (corpus_size - doc_count + 0.5) / (doc_count + 0.5)).item()
         return idf_score
 
     def _tokenize_text(self, corpus: List[str] | str):
@@ -132,6 +134,7 @@ class SparseVectorStore(BaseVectorStore):
         """Add nodes to index."""
         for node in nodes:
             self.node_dict[node.id_] = node
+        self.node_list = list(self.node_dict.values())
         self._update_csv()  # Update CSV after adding nodes
 
         # Reinitialize BM25 assets after adding new nodes
@@ -152,9 +155,13 @@ class SparseVectorStore(BaseVectorStore):
         tokenized_query = self._tokenize_text(query)
         for q in tokenized_query:
             # calulate the score for each token in the query
-            # HINT: use self.doc_freqs, self.idf, self.corpus_size, self.avgdl
-            "Your code here"
-            cur_score = None
+             # HINT: use self.doc_freqs, self.idf, self.corpus_size, self.avgdl
+            freq_q = np.array([doc_freq.get(q, 0) for doc_freq in self.doc_freqs])
+            if self.idf.get(q): 
+                query_idf = self.idf[q]
+            else: 
+                query_idf = self._calculate_idf(1, self.corpus_size)
+            cur_score = np.array(query_idf * (freq_q * (self.k1 + 1))/ (freq_q + self.k1 * (1 - self.b + self.b * np.array(self.doc_len) / self.avgdl)))
             score += cur_score
         return score
 
